@@ -1,0 +1,119 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: data-pv
+  labels:
+    type: local
+spec:
+  storageClassName: manual
+  capacity:
+    storage: 10Gi
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: "/mnt"
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: data-pv-claim
+spec:
+  storageClassName: manual
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 3Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ballista-scheduler
+  labels:
+    app: ballista-scheduler
+spec:
+  ports:
+    - port: 50050
+      name: scheduler
+    - port: 80
+      name: scheduler-ui
+  selector:
+    app: ballista-scheduler
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ballista-scheduler
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ballista-scheduler
+  template:
+    metadata:
+      labels:
+        app: ballista-scheduler
+        ballista-cluster: ballista
+    spec:
+      containers:
+        - name: ballista-scheduler
+          image: <your-repo>/datafusion-ballista-scheduler:0.12.0
+          args: ["--bind-port=50050"]
+          ports:
+            - containerPort: 50050
+              name: flight
+          volumeMounts:
+            - mountPath: /mnt
+              name: data
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: data-pv-claim
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ballista-executor
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: ballista-executor
+  template:
+    metadata:
+      labels:
+        app: ballista-executor
+        ballista-cluster: ballista
+    spec:
+      containers:
+        - name: ballista-executor
+          image: <your-repo>/datafusion-ballista-executor:0.12.0
+          args:
+            - "--bind-port=50051"
+            - "--scheduler-host=ballista-scheduler"
+            - "--scheduler-port=50050"
+          ports:
+            - containerPort: 50051
+              name: flight
+          volumeMounts:
+            - mountPath: /mnt
+              name: data
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: data-pv-claim
+---
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: ballista-executor
+spec:
+  scaleTargetRef:
+    name: ballista-executor
+  minReplicaCount: 0
+  maxReplicaCount: 5
+  triggers:
+    - type: external
+      metadata:
+        # Change this DNS if the scheduler isn't deployed in the "default" namespace
+        scalerAddress: ballista-scheduler.default.svc.cluster.local:50050

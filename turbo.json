@@ -1,0 +1,59 @@
+{
+  "$schema": "https://turbo.build/schema.json",
+  "tasks": {
+    "//#format:shfmt": {
+      "cache": false,
+      "inputs": ["**/*.sh"]
+    },
+    "//#lint:biome": {
+      "cache": false,
+      "inputs": ["**/*.{js,ts,jsx,tsx,json,jsonc}"]
+    },
+    "//#lint:commitlint": {
+      "cache": false
+    },
+    "//#lint:gitleaks": {
+      "inputs": ["$TURBO_DEFAULT$", "**/*"]
+    },
+    "//#lint:shellcheck": {
+      "cache": false,
+      "inputs": ["**/*.sh"]
+    },
+    "//#spellcheck": {
+      "inputs": ["**/*"]
+    },
+    "build": {
+      "dependsOn": ["^build", "generate"],
+      "inputs": ["$TURBO_DEFAULT$", "!*.md", "!*.sum", "!*.lock"],
+      "outputLogs": "new-only",
+      "outputs": ["terraform.tfstate", "build/**"]
+    },
+    "format": {
+      "dependsOn": ["^format", "generate", "//#format:shfmt"],
+      "outputLogs": "errors-only"
+    },
+    "generate": {
+      "dependsOn": ["^generate", "^build"],
+      "inputs": ["**/*.tpl"],
+      "outputs": ["**/*.gen.tf", "Dockerfile", "package.json", "versions.json"]
+    },
+    "lint": {
+      "dependsOn": ["^lint", "//#lint:shellcheck", "//#lint:biome", "//#lint:commitlint", "//#lint:gitleaks", "//#spellcheck"],
+      "outputLogs": "errors-only"
+    },
+    "test": {
+      "dependsOn": ["^test", "^build", "^generate"],
+      "inputs": ["$TURBO_DEFAULT$", "!*.md", "!*.sum", "!*.lock"],
+      "outputLogs": "errors-only"
+    },
+    "update:snapshots": {
+      "cache": false,
+      "dependsOn": ["build", "^update:snapshots"]
+    },
+    "update:versions": {
+      "dependsOn": ["^update:versions"],
+      "inputs": ["$TURBO_DEFAULT$", "go.mod", "package.json", "!*.md", "!*.sum", "!*.lock"]
+    }
+  },
+  "ui": "tui"
+}

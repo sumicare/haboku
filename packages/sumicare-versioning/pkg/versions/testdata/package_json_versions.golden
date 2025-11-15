@@ -1,0 +1,10 @@
+{
+  "name": "@test/cnpg",
+  "version": "1.0.0",
+  "versions": {
+    "cnpg": "1.27.1",
+    "postgres": "17_2",
+    "postgresPgaudit": "18.0.0",
+    "postgresPgvector": "0.8.0"
+  }
+}

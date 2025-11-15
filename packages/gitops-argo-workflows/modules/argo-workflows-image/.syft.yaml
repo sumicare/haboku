@@ -1,0 +1,6 @@
+default-catalogers: []
+select-catalogers:
+  - +go-module-binary-cataloger
+  - +go-module-file-cataloger
+  - +javascript-lock-cataloger
+  - +binary-classifier-cataloger

@@ -1,0 +1,54 @@
+{
+  "authors": [
+    "Yuriy Yarosh <yuriy@yarosh.dev>"
+  ],
+  "description": "Sumicare CNPG Chart",
+  "devDependencies": {
+    "@sumicare/images": "workspace:*",
+    "@sumicare/versioning": "workspace:*",
+    "npm-run-all": "^4.1.5"
+  },
+  "engines": {
+    "node": ">=25"
+  },
+  "name": "@sumicare/charts-storage-cnpg",
+  "packageManager": "yarn@4.10.3",
+  "private": true,
+  "repository": {
+    "type": "git",
+    "url": ""
+  },
+  "scripts": {
+    "format": "run-p 'format:*'",
+    "format:go": "golangci-lint run --fix",
+    "format:opentofu": "tofu fmt -recursive .",
+    "generate": "versioning sync",
+    "lint": "run-s 'lint:*'",
+    "lint:go": "golangci-lint run",
+    "lint:opentofu": "run-s 'lint:opentofu:*'",
+    "lint:opentofu:checkov": "checkov --skip-path '(?i)dockerfile\\.tpl$' --quiet --compact --directory .",
+    "lint:opentofu:terrascan": "terrascan scan -t k8s,docker -v -d . || true",
+    "lint:opentofu:tflint": "run-s 'lint:opentofu:tflint:*'",
+    "lint:opentofu:tflint:cnpg-chart": "tflint --chdir modules/cnpg-chart",
+    "lint:opentofu:tflint:cnpg-image": "tflint --chdir modules/cnpg-image",
+    "lint:opentofu:trivy": "trivy config --severity CRITICAL,HIGH --skip-files '**/*.tpl' .",
+    "lint:opentofu:validate": "tofu validate",
+    "test": "ginkgo run -v ./..."
+  },
+  "type": "module",
+  "version": "1.0.0",
+  "versions": {
+    "cnpg": "1.27.1",
+    "postgres": "18.1",
+    "postgresHypopg": "1.4.2",
+    "postgresIndexAdvisor": "0.2.0",
+    "postgresPgRepack": "1.5.3",
+    "postgresPgaudit": "18.0.0",
+    "postgresPgmq": "1.8.0",
+    "postgresPgroonga": "4.0.4",
+    "postgresPgrouting": "4.0.0",
+    "postgresPgvector": "0.8.1",
+    "postgresPgxUlid": "0.2.2",
+    "postgresRum": "1.3.15"
+  }
+}

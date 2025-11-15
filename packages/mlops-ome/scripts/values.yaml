@@ -1,0 +1,134 @@
+global:
+  # Image pull secrets for all containers in the chart
+  # Example:
+  # imagePullSecrets:
+  #   - name: my-registry-secret
+  hub: "ghcr.io/moirai-internal"
+  imagePullSecrets: []
+
+ome:
+  version: &defaultVersion v0.1.2
+  metricsaggregator:
+    enableMetricAggregation: "false"
+    enablePrometheusScraping: "false"
+  benchmarkJob:
+    image: genai-bench
+    tag: 0.1.113
+    cpuRequest: "2"
+    memoryRequest: "2Gi"
+    cpuLimit: "2"
+    memoryLimit: "2Gi"
+  multinodeProber:
+    image: multinode-prober
+    tag: v0.1
+    memoryRequest: 100Mi
+    cpuRequest: 100m
+    memoryLimit: 100Mi
+    cpuLimit: 100m
+    startupFailureThreshold: 150
+    startupPeriodSeconds: 30
+    startupTimeoutSeconds: 60
+    startupInitialDelaySeconds: 120
+    unavailableThresholdSeconds: 600
+  controller:
+    replicaCount: 3
+    deploymentMode: "RawDeployment"
+    ingressGateway:
+      domain: svc.cluster.local
+      domainTemplate: "{{ .Name }}.{{ .Namespace }}.{{ .IngressDomain }}"
+      urlScheme: http
+      disableIstioVirtualHost: false
+      localGateway:
+        gateway: knative-serving/knative-local-gateway
+        gatewayService: knative-local-gateway.istio-system.svc.cluster.local
+      ingressGateway:
+        gateway: knative-serving/knative-ingress-gateway
+        gatewayService: istio-ingressgateway.istio-system.svc.cluster.local
+        className: istio
+      omeIngressGateway: ""
+      additionalIngressDomains: null
+      pathTemplate: ""
+      disableIngressCreation: false
+      enableGatewayAPI: false
+    nodeSelector: {}
+    tolerations: []
+    topologySpreadConstraints: []
+    affinity: {}
+    image: ome-manager
+    tag: *defaultVersion
+    resources:
+      limits:
+        cpu: 2
+        memory: 4Gi
+      requests:
+        cpu: 2
+        memory: 4Gi
+  omeAgent:
+    image: ome-agent
+    tag: *defaultVersion
+    authType: InstancePrincipal
+    compartmentId: ocid1.compartment.oc1..dummy-compartment
+    vaultId: ocid1.vault.oc1.ap-osaka-1.dummy.dummy-vault
+    region: ap-osaka-1
+    modelInit:
+      memoryRequest: 150Gi
+      memoryLimit: 180Gi
+      cpuRequest: 15
+      cpuLimit: 15
+    fineTunedAdapter:
+      memoryRequest: 300Gi
+      memoryLimit: 320Gi
+      cpuRequest: 15
+      cpuLimit: 15
+  kedaConfig:
+    enableKeda: true
+    promServerAddress: "http://prometheus-operated.monitoring.svc.cluster.local:9090"
+    customPromQuery: ""
+    scalingThreshold: "10"
+    scalingOperator: "GreaterThanOrEqual"
+modelAgent:
+  hostPath: /mnt/data/models
+  priorityClassName: system-node-critical
+  serviceAccountName: ome-model-agent
+  image:
+    repository: model-agent
+    pullPolicy: Always
+    tag: *defaultVersion
+
+  nodeSelector: {}
+
+  # Additional volumes to mount into the model-agent DaemonSet pods
+  # Examples:
+  # extraVolumes:
+  #   - name: shared-tmp
+  #     emptyDir: {}
+  #   - name: config
+  #     configMap:
+  #       name: my-config
+  extraVolumes: []
+
+  # Additional volumeMounts for the model-agent container
+  # Examples:
+  # extraVolumeMounts:
+  #   - name: shared-tmp
+  #     mountPath: /tmp/shared
+  #   - name: config
+  #     mountPath: /etc/model-agent/config
+  #     readOnly: true
+  extraVolumeMounts: []
+
+  tolerations:
+    - key: nvidia.com/gpu
+      operator: Exists
+      effect: NoSchedule
+
+  health:
+    port: 8080
+
+  resources:
+    limits:
+      cpu: "10"
+      memory: 100Gi
+    requests:
+      cpu: "10"
+      memory: 100Gi

@@ -1,0 +1,873 @@
+version: "2"
+
+linters:
+  default: all
+  disable:
+    - wsl
+    - gomodguard
+    - testifylint
+    - testpackage
+    - paralleltest
+    - importas
+    - funlen
+    - tagliatelle
+    - funcorder
+    - maintidx
+    - gocognit
+    - gocyclo
+    - cyclop
+    - noinlineerr
+    - forbidigo
+    - mnd
+
+  settings:
+    asasalint:
+      exclude:
+        - "^(fmt|log|logger|t|)\\.(Print|Fprint|Sprint|Fatal|Panic|Error|Warn|Warning|Info|Debug|Log)(|f|ln)$"
+        - Append
+        - \.Wrapf
+
+    copyloopvar:
+      check-alias: true
+
+    depguard:
+      rules:
+        main:
+          list-mode: strict
+          allow:
+            - $gostd
+            - github.com/aws/aws-sdk-go-v2
+            - github.com/onsi
+            - k8s.io
+            - github.com/gruntwork-io/terratest
+            - github.com/pelletier/go-toml
+            - github.com/Masterminds/semver
+            - sumi.care
+            - golang.org/x/sync/errgroup
+            - go.yaml.in/yaml
+            - github.com/sebdah/goldie
+            - sigs.k8s.io
+          deny:
+            - pkg: "math/rand$"
+              desc: use math/rand/v2
+            - pkg: "github.com/sirupsen/logrus"
+              desc: not allowed
+            - pkg: "github.com/pkg/errors"
+              desc: Should be replaced by standard lib errors package
+
+    dogsled:
+      max-blank-identifiers: 3
+
+    dupl:
+      threshold: 100
+
+    dupword:
+      keywords:
+        - "the"
+        - "and"
+        - "a"
+      ignore:
+        - "ii"
+      comments-only: true
+
+    embeddedstructfieldcheck:
+      forbid-mutex: true
+
+    errcheck:
+      check-type-assertions: true
+      check-blank: true
+      exclude-functions:
+        - io/ioutil.ReadFile
+        - io.Copy(*bytes.Buffer)
+        - io.Copy(os.Stdout)
+
+    errchkjson:
+      check-error-free-encoding: true
+
+    errorlint:
+      allowed-errors:
+        - err: "io.EOF"
+          fun: "example.com/pkg.Read"
+      allowed-errors-wildcard:
+        - err: "example.com/pkg.ErrMagic"
+          fun: "example.com/pkg.Magic"
+
+    exhaustive:
+      check:
+        - switch
+        - map
+      default-case-required: true
+
+    exhaustruct:
+      include:
+        - '.+\.Test'
+      exclude:
+        - '.+/cobra\.Command$'
+      allow-empty: true
+      allow-empty-rx:
+        - '.*/http\.Cookie'
+      allow-empty-returns: true
+      allow-empty-declarations: true
+
+    fatcontext:
+      check-struct-pointers: true
+
+    # funcorder:
+    #   alphabetical: true
+
+    ginkgolinter:
+      forbid-focus-container: true
+      allow-havelen-zero: true
+      force-expect-to: true
+      validate-async-intervals: true
+      forbid-spec-pollution: true
+      force-succeed: true
+      force-tonot: true
+
+    gochecksumtype:
+      include-shared-interfaces: true
+
+    goconst:
+      min-len: 2
+      min-occurrences: 3
+      numbers: true
+      min: 2
+      max: 2
+      find-duplicates: true
+      eval-const-expressions: true
+
+    gocritic:
+      enable-all: true
+      settings:
+        captLocal:
+          paramsOnly: false
+        commentedOutCode:
+          minLength: 50
+        elseif:
+          skipBalanced: false
+        hugeParam:
+          sizeThreshold: 70
+        ifElseChain:
+          minThreshold: 2
+        nestingReduce:
+          bodyWidth: 4
+        rangeExprCopy:
+          sizeThreshold: 512
+          skipTestFuncs: false
+        rangeValCopy:
+          sizeThreshold: 32
+          skipTestFuncs: false
+        ruleguard:
+          failOn: all
+        tooManyResultsChecker:
+          maxResults: 10
+        truncateCmp:
+          skipArchDependent: false
+        underef:
+          skipRecvDeref: false
+        unnamedResult:
+          checkExported: true
+
+    godoclint:
+      default: all
+
+      options:
+        max-len:
+          length: 180
+
+        require-doc:
+          ignore-unexported: false
+
+        start-with-name:
+          include-unexported: true
+
+    godot:
+      scope: declarations
+      period: true
+
+    godox:
+      keywords:
+        - NOTE
+        - IMPORTANT
+        - OPTIMIZE
+        - HACK
+        - TODO
+        - BUG
+
+    goheader:
+      values:
+        const:
+          COMPANY: Sumicare
+      template: |-
+
+        Copyright (c) {{ YEAR }} {{ COMPANY }}
+
+        Licensed under the Apache License, Version 2.0 (the "License");
+        you may not use this file except in compliance with the License.
+        You may obtain a copy of the License at
+
+          http://www.apache.org/licenses/LICENSE-2.0
+
+        Unless required by applicable law or agreed to in writing, software
+        distributed under the License is distributed on an "AS IS" BASIS,
+        WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+        See the License for the specific language governing permissions and
+        limitations under the License.
+
+    gomoddirectives:
+      replace-local: true
+      exclude-forbidden: true
+      ignore-forbidden: true
+      toolchain-forbidden: true
+      toolchain-pattern: 'go1\.25\.\d+$'
+      tool-forbidden: true
+      go-debug-forbidden: true
+      go-version-pattern: '\d\.\d+(\.0)?'
+
+    gosec:
+      concurrency: 12
+
+      config:
+        global:
+          nosec: true
+          show-ignored: true
+          audit: true
+        G101:
+          pattern: "(?i)passwd|pass|password|pwd|secret|token|pw|apiKey|bearer|cred"
+          ignore_entropy: false
+          entropy_threshold: "80.0"
+          per_char_threshold: "3.0"
+          truncate: "32"
+        G104:
+          fmt:
+            - Fscanf
+        G111:
+          pattern: "http\\.Dir\\(\"\\/\"\\)|http\\.Dir\\('\\/'\\)"
+        G301: "0750"
+        G302: "0600"
+        G306: "0600"
+
+    gosmopolitan:
+      watch-for-scripts:
+        - Devanagari
+        - Han
+        - Hangul
+        - Hiragana
+        - Katakana
+
+    govet:
+      enable-all: true
+      settings:
+        shadow:
+          strict: true
+
+    grouper:
+      const-require-single-const: true
+      import-require-single-import: true
+      type-require-single-type: true
+      var-require-single-var: true
+
+    iface:
+      enable:
+        - identical # Identifies interfaces in the same package that have identical method sets.
+        - unused # Identifies interfaces that are not used anywhere in the same package where the interface is defined.
+        - opaque # Identifies functions that return interfaces, but the actual returned value is always a single concrete implementation.
+        - unexported # Identifies interfaces that are not exported but are used in exported functions or methods.
+
+    inamedparam:
+      skip-single-param: true
+
+    ineffassign:
+      check-escaping-errors: true
+
+    interfacebloat:
+      max: 8
+
+    iotamixing:
+      report-individual: true
+
+    ireturn:
+      allow: [anon, error, empty, stdlib, generic]
+
+    lll:
+      line-length: 180
+      tab-width: 2
+
+    loggercheck:
+      # Allow check for the slog library.
+      slog: true
+      klog: false
+      kitlog: false
+      logr: false
+      zap: false
+      # Require all logging keys to be inlined constant strings.
+      require-string-key: true
+      # Require printf-like format specifier (%s, %d for example) not present.
+      no-printf-like: true
+
+    makezero:
+      always: true
+
+    misspell:
+      locale: US
+      ignore-rules:
+        - someword
+      mode: restricted
+
+    mnd:
+      # List of numbers to exclude from analysis.
+      # The numbers should be written as string.
+      # Values always ignored: "1", "1.0", "0" and "0.0".
+      ignored-numbers:
+        - "0666"
+        - "0755"
+        - "42"
+      ignored-functions:
+        - '^math\.'
+        - '^http\.StatusText$'
+
+    musttag:
+      # A set of custom functions to check in addition to the builtin ones.
+      # Default: json, xml, gopkg.in/yaml.v3, BurntSushi/toml, mitchellh/mapstructure, jmoiron/sqlx
+      functions:
+        # The full name of the function, including the package.
+        - name: github.com/hashicorp/hcl/v2/hclsimple.DecodeFile
+          # The struct tag whose presence should be ensured.
+          tag: hcl
+          # The position of the argument to check.
+          arg-pos: 2
+
+    nakedret:
+      max-func-lines: 32
+
+    nestif:
+      min-complexity: 8
+
+    nilnil:
+      detect-opposite: true
+
+    nlreturn:
+      # Size of the block (including return statement that is still "OK"), so no return split required.
+      block-size: 2
+
+    nolintlint:
+      require-explanation: true
+      require-specific: true
+
+    nonamedreturns:
+      report-error-in-defer: true
+
+    perfsprint:
+      err-error: true
+      loop-other-ops: true
+
+    prealloc:
+      # IMPORTANT: we don't recommend using this linter before doing performance profiling.
+      # For most programs usage of prealloc will be a premature optimization.
+      # Report pre-allocation suggestions on for loops.
+      # Default: false
+      for-loops: true
+
+    predeclared:
+      qualified-name: true
+
+    promlinter:
+      strict: true
+      # Please refer to https://github.com/yeya24/promlinter#usage for detailed usage.
+      disabled-linters: []
+
+    protogetter:
+      replace-first-arg-in-append: true
+
+    reassign:
+      # Patterns for global variable names that are checked for reassignment.
+      # See https://github.com/curioswitch/go-reassign#usage
+      patterns:
+        - "EOF"
+        - "Err.*"
+        - ".*"
+
+    recvcheck:
+      exclusions: []
+        # - "*.Value"
+
+    revive:
+      max-open-files: 2048
+      severity: error
+      enable-all-rules: true
+      confidence: 0.1
+
+      rules:
+        - name: dot-imports
+          disabled: true
+        - name: file-header
+          disabled: true
+        - name: add-constant
+          arguments:
+            - max-lit-count: "10"
+              allow-strs: '""'
+              allow-ints: "0,1,2,4,5,6,7,8,9,10"
+              allow-floats: "0.0,0.,1.0,1.,2.0,2."
+        - name: comment-spacings
+          arguments:
+            - ^//go:generate
+            - "+optional"
+        - name: cognitive-complexity
+          disabled: true
+        - name: confusing-results
+          disabled: true
+        - name: comments-density
+          arguments: [15]
+        - name: cyclomatic
+          disabled: true
+        - name: early-return
+          arguments:
+            - "preserve-scope"
+            - "allow-jump"
+        - name: enforce-map-style
+          arguments:
+            - "make"
+        - name: enforce-repeated-arg-type-style
+          arguments:
+            - "short"
+            - func-arg-style: "full"
+              func-ret-val-style: "short"
+        - name: enforce-slice-style
+          arguments:
+            - "make"
+        - name: enforce-switch-style
+          arguments: ["allowNoDefault"]
+        - name: error-strings
+          arguments:
+            - "xerrors.New"
+        - name: exported
+          arguments:
+            - "check-private-receivers"
+            - "disable-stuttering-check"
+            - "say-repetitive-instead-of-stutters"
+            - "check-public-interface"
+            - "disable-checks-on-constants"
+            - "disable-checks-on-functions"
+            - "disable-checks-on-methods"
+            - "disable-checks-on-types"
+            - "disable-checks-on-variables"
+        - name: file-length-limit
+          arguments:
+            - max: 1000
+              skip-comments: true
+              skip-blank-lines: true
+        - name: filename-format
+          arguments:
+            - "^[_a-z][_a-z0-9]*\\.go$"
+        - name: function-length
+          disabled: true
+        - name: function-result-limit
+          arguments: [3]
+        - name: import-alias-naming
+          arguments:
+            - "^[a-z][a-z0-9]{0,}$"
+            - allow-regex: "^[a-z][a-z0-9]{0,}$"
+        - name: imports-blocklist
+          arguments:
+            - "crypto/md5"
+            - "crypto/sha1"
+        - name: indent-error-flow
+          arguments:
+            - "preserve-scope"
+        - name: line-length-limit
+          arguments: [180]
+        - name: max-control-nesting
+          arguments: [5]
+        - name: max-public-structs
+          arguments: [12]
+        - name: receiver-naming
+          disabled: true
+        - name: string-format
+          arguments:
+            - - "core.WriteError[1].Message"
+              - "/^([^A-Z]|$)/"
+              - must not start with a capital letter
+            - - "fmt.Errorf[0]"
+              - '/(^|[^\.!?])$/'
+              - must not end in punctuation
+            - - panic
+              - '/^[^\n]*$/'
+              - must not contain line breaks
+        - name: struct-tag
+          arguments:
+            - "json,inline"
+            - "bson,outline,gnu"
+        - name: superfluous-else
+          arguments:
+            - "preserve-scope"
+        - name: unchecked-type-assertion
+          arguments:
+            - accept-ignored-assertion-result: true
+        - name: unhandled-error
+          arguments:
+            - "^fmt.Printf"
+            - "myFunction"
+        - name: unused-parameter
+          arguments:
+            - allow-regex: "^_"
+        - name: unused-receiver
+          arguments:
+            - allow-regex: "^_"
+        # https://github.com/mgechev/revive/blob/HEAD/RULES_DESCRIPTIONS.md#var-naming
+        - name: var-naming
+          arguments:
+            - ["ID"] # AllowList
+            - ["VM"] # DenyList
+            - - skip-initialism-name-checks: true
+                upper-case-const: true
+                skip-package-name-checks: true
+                extra-bad-package-names:
+                  - helpers
+                  - models
+
+    rowserrcheck:
+      packages:
+        - github.com/jmoiron/sqlx
+        - github.com/jackc/pgx
+        - github.com/jackc/pgx/stdlib
+
+    sloglint:
+      kv-only: true
+      no-global: "all"
+      context: "all"
+      static-msg: true
+      msg-style: capitalized
+      no-raw-keys: true
+      key-naming-case: snake
+      # https://github.com/go-simpler/sloglint?tab=readme-ov-file#forbidden-keys
+      forbidden-keys:
+        - time
+        - level
+        - msg
+        - source
+        - foo
+      args-on-sep-lines: true
+
+    spancheck:
+      checks:
+        - end
+        - record-error
+        - set-status
+
+    staticcheck:
+      dot-import-whitelist:
+        - fmt
+        - github.com/onsi/ginkgo/v2
+        - github.com/onsi/gomega
+      initialisms:
+        [
+          "ACL",
+          "API",
+          "ASCII",
+          "CPU",
+          "CSS",
+          "DNS",
+          "EOF",
+          "GUID",
+          "HTML",
+          "HTTP",
+          "HTTPS",
+          "ID",
+          "IP",
+          "JSON",
+          "QPS",
+          "RAM",
+          "RPC",
+          "SLA",
+          "SMTP",
+          "SQL",
+          "SSH",
+          "TCP",
+          "TLS",
+          "TTL",
+          "UDP",
+          "UI",
+          "GID",
+          "UID",
+          "UUID",
+          "URI",
+          "URL",
+          "UTF8",
+          "VM",
+          "XML",
+          "XMPP",
+          "XSRF",
+          "XSS",
+          "SIP",
+          "RTP",
+          "AMQP",
+          "DB",
+          "TS",
+        ]
+      http-status-code-whitelist: ["200", "400", "404", "500"]
+
+    tagalign:
+      align: true
+      # Specify the order of tags, the other tags will be sorted by name.
+      order:
+        - json
+        - yaml
+        - yml
+        - toml
+        - mapstructure
+        - binding
+        - validate
+      strict: true
+
+    usestdlibvars:
+      time-date-month: true
+      time-month: true
+      time-layout: true
+      crypto-hash: true
+      default-rpc-path: true
+      sql-isolation-level: true
+      tls-signature-scheme: true
+      constant-kind: true
+
+    usetesting:
+      os-temp-dir: true
+      context-background: true
+      context-todo: true
+
+    unconvert:
+      # Remove conversions that force intermediate rounding.
+      fast-math: true
+      # Be more conservative (experimental).
+      safe: true
+
+    unparam:
+      # Inspect exported functions (probably should be disabled, too noisy)
+      check-exported: true
+
+    unqueryvet:
+      allowed-patterns:
+        - "SELECT \\* FROM information_schema\\..*"
+        - "SELECT \\* FROM pg_catalog\\..*"
+        - "SELECT COUNT\\(\\*\\)"
+        - "SELECT MAX\\(\\*\\)"
+        - "SELECT MIN\\(\\*\\)"
+
+    unused:
+      field-writes-are-uses: false
+      exported-fields-are-used: false
+      local-variables-are-used: false
+      parameters-are-used: true
+      generated-is-used: true
+
+    varnamelen:
+      max-distance: 6
+      min-name-length: 2
+      check-receiver: true
+      check-return: true
+      check-type-param: true
+      ignore-type-assert-ok: true
+      ignore-map-index-ok: true
+      ignore-chan-recv-ok: true
+      # Optional list of variable names that should be ignored completely.
+      ignore-names:
+        - err
+      # Optional list of variable declarations that should be ignored completely.
+      # Entries must be in one of the following forms (see below for examples):
+      # - for variables, parameters, named return values, method receivers, or type parameters:
+      #   <name> <type>  (<type> can also be a pointer/slice/map/chan/...)
+      # - for constants: const <name>
+      ignore-decls:
+        - c echo.Context
+        - t testing.T
+        - f *foo.Bar
+        - e error
+        - i int
+        - const C
+        - T any
+        - m map[string]int
+
+    whitespace:
+      multi-if: true
+      multi-func: true
+
+    wrapcheck:
+      # An array of strings specifying additional substrings of signatures to ignore.
+      # Unlike 'ignore-sigs', this option extends the default set (or the set specified in 'ignore-sigs') without replacing it entirely.
+      # This allows you to add specific signatures to the ignore list
+      # while retaining the defaults or any items in 'ignore-sigs'.
+      extra-ignore-sigs:
+        - .CustomError(
+        - .SpecificWrap(
+
+      # An array of strings that specify substrings of signatures to ignore.
+      # If this set, it will override the default set of ignored signatures.
+      # See https://github.com/tomarrell/wrapcheck#configuration for more information.
+      # Default: [".Errorf(", "errors.New(", "errors.Unwrap(", "errors.Join(", ".Wrap(", ".Wrapf(", ".WithMessage(", ".WithMessagef(", ".WithStack("]
+      ignore-sigs:
+        - .Errorf(
+        - errors.New(
+        - errors.Unwrap(
+        - errors.Join(
+        - .Wrap(
+        - .Wrapf(
+        - .WithMessage(
+        - .WithMessagef(
+        - .WithStack(
+      ignore-sig-regexps:
+        - \.New.*Error\(
+      ignore-package-globs:
+        - encoding/*
+      # An array of strings that specify regular expressions of interfaces to ignore.
+      ignore-interface-regexps:
+        - ^(?i)c(?-i)ach(ing|e)
+      # Determines whether wrapcheck should report errors returned from inside the package.
+      # Default: false
+      report-internal-errors: true
+
+    wsl_v5:
+      # Same as above, but allows cuddling if the variable is used anywhere in the following (or nested) block.
+      allow-whole-block: true
+
+      # If a block contains more than this number of lines, the branch statement needs to be separated by whitespace.
+      branch-max-lines: 4
+
+      # If set to a non-negative number, case blocks need to end with whitespace if exceeding this number
+      case-max-lines: 2
+
+      default: all
+
+  # Defines a set of rules to ignore issues.
+  # It does not skip the analysis, and so does not ignore "typecheck" errors.
+  exclusions:
+    generated: strict
+    presets:
+      - comments
+      - std-error-handling
+      - common-false-positives
+      - legacy
+
+    # Excluding configuration per-path, per-linter, per-text and per-source.
+    rules:
+      # Exclude known linters from partially hard-vendored code,
+      # which is impossible to exclude via `nolint` comments.
+      # `/` will be replaced by the current OS file path separator to properly work on Windows.
+      - path: internal/hmac/
+        text: "weak cryptographic primitive"
+        linters:
+          - gosec
+
+      # Exclude `lll` issues for long lines with `go:generate`.
+      - linters:
+          - lll
+        source: "^//go:generate "
+
+      - linters:
+          - gocritic
+        text: "consider giving a name"
+
+      - linters:
+          - govet
+        source: "err :="
+
+      # Exclude godoclint warnings for blank identifier declarations (common in tests and interface checks)
+      - linters:
+          - godoclint
+        text: 'symbol should have a godoc \("_"\)'
+
+      # Exclude grouper warnings for test files (allow flexible var declarations in tests)
+      - path: _test\.go$
+        linters:
+          - grouper
+
+formatters:
+  enable:
+    - gci
+    - gofmt
+    - gofumpt
+    - goimports
+    - golines
+    - swaggo
+
+  # Formatters settings.
+  settings:
+    gci:
+      # Section configuration to compare against.
+      # Section names are case-insensitive and may contain parameters in ().
+      # The default order of sections is `standard > default > custom > blank > dot > alias > localmodule`.
+      # If `custom-order` is `true`, it follows the order of `sections` option.
+      sections:
+        - standard # Standard section: captures all standard packages.
+        - default # Default section: contains all imports that could not be matched to another section type.
+        - blank # Blank section: contains all blank imports. This section is not present unless explicitly enabled.
+        - dot # Dot section: contains all dot imports. This section is not present unless explicitly enabled.
+        - alias # Alias section: contains all alias imports. This section is not present unless explicitly enabled.
+        - localmodule # Local module section: contains all local packages. This section is not present unless explicitly enabled.
+
+      # Checks that no inline comments are present.
+      no-inline-comments: true
+
+      # Checks that no prefix comments (comment lines above an import) are present.
+      no-prefix-comments: true
+
+      # Enable custom order of sections.
+      # If `true`, make the section order the same as the order of `sections`.
+      custom-order: true
+
+      # Drops lexical ordering for custom sections.
+      no-lex-order: true
+
+    gofmt:
+      # Simplify code: gofmt with `-s` option.
+      # Default: true
+      simplify: false
+      rewrite-rules:
+        - pattern: "interface{}"
+          replacement: "any"
+        - pattern: "a[b:len(a)]"
+          replacement: "a[b:]"
+
+    gofumpt:
+      extra-rules: true
+
+    golines:
+      max-len: 180
+      tab-len: 2
+      shorten-comments: true
+      reformat-tags: false
+      # Split chained methods on the dots as opposed to the arguments.
+      chain-split-dots: false
+
+issues:
+  max-issues-per-linter: 0
+  max-same-issues: 5
+  uniq-by-line: true
+  fix: true
+
+output:
+  formats:
+    text:
+      colors: true
+      print-issued-lines: false
+
+  path-mode: "abs"
+
+  sort-order:
+    - linter
+    - severity
+    - file # filepath, line, and column.
+
+  show-stats: false
+
+run:
+  timeout: 5m
+  allow-parallel-runners: true
+  allow-serial-runners: true
+  go: "1.25"
+  concurrency: 16
+
+severity:
+  default: error
+  rules:
+    - linters:
+        - dupl
+      severity: info

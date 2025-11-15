@@ -1,0 +1,93 @@
+{
+  $schema: "https://docs.renovatebot.com/renovate-schema.json",
+
+  // Base configuration & sanity defaults
+  extends: [
+    "config:recommended",
+    "docker:pinDigests",
+    ":semanticCommits",
+    ":enableVulnerabilityAlertsWithLabel(security)"
+  ],
+
+  timezone: "UTC",
+  // Prefer a single batch per day to reduce CI noise
+  schedule: ["after 7pm and before 7am every weekday", "every weekend"],
+
+  // Keep CI load manageable
+  prConcurrentLimit: 5,
+  prHourlyLimit: 2,
+
+  labels: ["dependencies"],
+
+  // Use GitHub's native automerge for reliability
+  platformAutomerge: true,
+
+  // Skip template files that are generated
+  ignorePaths: ["**/*.tpl", "**/testdata/**"],
+
+  // General rules
+  packageRules: [
+    {
+      // Automerge safe patch-level bumps once tests pass
+      matchUpdateTypes: ["patch", "digest"],
+      automerge: true,
+      automergeType: "pr"
+    },
+    {
+      // Group non-major updates for asdf tools
+      matchManagers: ["asdf"],
+      matchUpdateTypes: ["minor", "patch"],
+      groupName: "asdf tools (non-major)"
+    },
+    {
+      // Keep major asdf updates separate for review
+      matchManagers: ["asdf"],
+      matchUpdateTypes: ["major"],
+      groupName: null
+    },
+    {
+      // Group all tooling (DevDependencies) into a single PR
+      matchManagers: ["npm"],
+      matchDepTypes: ["devDependencies"],
+      groupName: "dev tooling"
+    },
+    {
+      // Keep Go module bumps separate per module for easier review
+      matchManagers: ["gomod"],
+      groupName: null,
+      separateMinorPatch: true
+    },
+    {
+      // Terraform providers/modules should be one-per-PR as well
+      matchManagers: ["terraform"],
+      groupName: null
+    }
+  ],
+
+  // Enable all relevant managers used in this repo
+  enabledManagers: [
+    "asdf",
+    "dockerfile",
+    "gomod",
+    "npm",
+    "terraform"
+  ],
+
+  // Automatically create branch if lock files need refresh
+  lockFileMaintenance: {
+    enabled: true,
+    schedule: ["before 6am on monday"],
+    automerge: false
+  },
+
+  // Run custom tasks after dependency updates
+  // Requires allowedPostUpgradeCommands in Renovate self-hosted config or GitHub App settings
+  postUpgradeTasks: {
+    commands: [
+      "yarn install",
+      "yarn update:versions"
+    ],
+    fileFilters: ["**/*"],
+    executionMode: "branch"
+  }
+}

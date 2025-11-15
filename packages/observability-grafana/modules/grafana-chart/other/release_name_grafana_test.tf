@@ -1,0 +1,63 @@
+/*
+   Copyright 2025 Sumicare
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+*/
+
+
+resource "kubernetes_pod" "release_name_grafana_test" {
+  metadata {
+    name      = "release-name-grafana-test"
+    namespace = "grafana"
+
+    labels = {
+      "app.kubernetes.io/instance" = "release-name"
+      "app.kubernetes.io/name"     = "grafana"
+      "app.kubernetes.io/version"  = "12.2.1"
+      "helm.sh/chart"              = "grafana-10.1.4"
+    }
+
+    annotations = {
+      "helm.sh/hook"               = "test"
+      "helm.sh/hook-delete-policy" = "before-hook-creation,hook-succeeded"
+    }
+  }
+
+  spec {
+    volume {
+      name = "tests"
+
+      config_map {
+        name = "release-name-grafana-test"
+      }
+    }
+
+    container {
+      name    = "release-name-test"
+      image   = "docker.io/bats/bats:v1.4.1"
+      command = ["/opt/bats/bin/bats", "-t", "/tests/run.sh"]
+
+      volume_mount {
+        name       = "tests"
+        read_only  = true
+        mount_path = "/tests"
+      }
+
+      image_pull_policy = "IfNotPresent"
+    }
+
+    restart_policy       = "Never"
+    service_account_name = "release-name-grafana-test"
+  }
+}
+

@@ -1,0 +1,36 @@
+{
+  "authors": [
+    "Yuriy Yarosh <yuriy@yarosh.dev>"
+  ],
+  "bin": "build/sumicare-versioning",
+  "description": "Sumicare Versions Manager",
+  "devDependencies": {
+    "npm-run-all": "^4.1.5"
+  },
+  "engines": {
+    "node": ">=25"
+  },
+  "files": [
+    "build/sumicare-versioning"
+  ],
+  "name": "@sumicare/versioning",
+  "packageManager": "yarn@4.10.3",
+  "private": true,
+  "repository": {
+    "type": "git",
+    "url": ""
+  },
+  "scripts": {
+    "build": "mkdir -p build && CGO_ENABLED=0 go build -ldflags=\"-s -w -extldflags '-static'\" -v -o build/sumicare-versioning .",
+    "format": "golangci-lint run --fix",
+    "generate": "run-s update:versions:sync",
+    "lint": "golangci-lint run",
+    "test": "ginkgo run -v --procs=32 --timeout=60s ./...",
+    "update:versions": "run-s 'update:versions:crds' 'update:versions:images' 'update:versions:sync'",
+    "update:versions:crds": "go run main.go crds",
+    "update:versions:images": "go run main.go update",
+    "update:versions:sync": "go run main.go sync"
+  },
+  "type": "module",
+  "version": "1.0.0"
+}

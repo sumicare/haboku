@@ -1,0 +1,149 @@
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.17.0
+  name: plugins.artifact.falcosecurity.dev
+spec:
+  group: artifact.falcosecurity.dev
+  names:
+    kind: Plugin
+    listKind: PluginList
+    plural: plugins
+    singular: plugin
+  scope: Namespaced
+  versions:
+  - name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        description: Plugin is the Schema for the plugin API.
+        properties:
+          apiVersion:
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            type: string
+          kind:
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: PluginSpec defines the desired state of Plugin.
+            properties:
+              config:
+                description: Config specifies the configuration for the plugin.
+                properties:
+                  initConfig:
+                    additionalProperties:
+                      type: string
+                    description: InitConfig is the initialization configuration for
+                      the plugin.
+                    type: object
+                  libraryPath:
+                    description: |-
+                      LibraryPath is the path to the plugin library, e.g., /usr/share/falco/plugins/myplugin.so.
+                      If omitted, it is set to /usr/share/falco/plugins/plugin-name.so.
+                    type: string
+                  name:
+                    description: |-
+                      Name is the name of the plugin.
+                      If omitted, the name of the CRD will be used.
+                    type: string
+                  openParams:
+                    description: OpenParams is the open parameters for the plugin.
+                    type: string
+                type: object
+              ociArtifact:
+                description: OCIArtifact specifies the reference to an OCI artifact.
+                properties:
+                  pullSecret:
+                    description: PullSecret contains authentication details used to
+                      pull the OCI artifact.
+                    properties:
+                      passwordKey:
+                        default: password
+                        description: PasswordKey is the key in the secret that contains
+                          the password.
+                        type: string
+                      secretName:
+                        description: SecretName is the name of the secret containing
+                          credentials.
+                        type: string
+                      usernameKey:
+                        default: username
+                        description: UsernameKey is the key in the secret that contains
+                          the username.
+                        type: string
+                    required:
+                    - secretName
+                    type: object
+                  reference:
+                    description: Reference is the OCI artifact reference.
+                    type: string
+                required:
+                - reference
+                type: object
+              selector:
+                description: Selector is used to select the nodes where the plugin
+                  should be applied.
+                properties:
+                  matchExpressions:
+                    description: matchExpressions is a list of label selector requirements.
+                      The requirements are ANDed.
+                    items:
+                      description: |-
+                        A label selector requirement is a selector that contains values, a key, and an operator that
+                        relates the key and values.
+                      properties:
+                        key:
+                          description: key is the label key that the selector applies
+                            to.
+                          type: string
+                        operator:
+                          description: |-
+                            operator represents a key's relationship to a set of values.
+                            Valid operators are In, NotIn, Exists and DoesNotExist.
+                          type: string
+                        values:
+                          description: |-
+                            values is an array of string values. If the operator is In or NotIn,
+                            the values array must be non-empty. If the operator is Exists or DoesNotExist,
+                            the values array must be empty. This array is replaced during a strategic
+                            merge patch.
+                          items:
+                            type: string
+                          type: array
+                          x-kubernetes-list-type: atomic
+                      required:
+                      - key
+                      - operator
+                      type: object
+                    type: array
+                    x-kubernetes-list-type: atomic
+                  matchLabels:
+                    additionalProperties:
+                      type: string
+                    description: |-
+                      matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels
+                      map is equivalent to an element of matchExpressions, whose key field is "key", the
+                      operator is "In", and the values array contains only "value". The requirements are ANDed.
+                    type: object
+                type: object
+                x-kubernetes-map-type: atomic
+            type: object
+          status:
+            description: PluginStatus defines the observed state of Plugin.
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}

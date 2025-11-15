@@ -1,0 +1,73 @@
+# VS Code
+.vscode
+.vscode/**
+.idea
+.idea/**
+.cursor
+.cursor/**
+
+!.vscode/launch.json
+
+.husky/_
+
+# Node
+node_modules/**/*
+node_modules/
+npm-debug.*
+
+# Logs
+*.log
+
+# TypeScript cache
+*.tsbuildinfo
+
+# Yarn 
+.yarn/*
+yarn-debug.*
+yarn-error.*
+
+# MacOS
+.DS_Store
+*.pem
+
+# PnP loaders
+.pnp
+.pnp.cjs
+.pnp.loader.mjs
+
+# Testing
+coverage/
+reports/
+*.out
+
+# Turbopack
+.turbo/
+
+# Terraform / OpenTofu
+.terragrunt-cache/
+.terragrunt-cache/**
+.terraform/
+.terraform.lock.hcl
+*.tfvars
+*.tfvars.json
+*.tfstate
+*.tfstate.*
+*.tfplan
+*.log
+
+# SBOM Files
+sbom.*
+
+# Build
+build/
+dist/
+.cache/
+*.test
+
+images/
+
+sumicare-versioning
+
+# CSpell
+.cspell-temp-config.json
+.cspell-cache

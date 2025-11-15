@@ -1,0 +1,44 @@
+ARG BUILDKIT_SBOM_SCAN_CONTEXT=true
+ARG BUILDKIT_SBOM_SCAN_STAGE=true
+ARG DEBIAN_VERSION="bookworm"
+ARG REPO="docker.io/"
+ARG ORG="sumicare"
+FROM ${REPO}${ORG}/build:${DEBIAN_VERSION} AS build
+
+ARG TARGETARCH
+
+ARG TEST_APP_VERSION="1.0.0"
+ARG TEST_APP_REPO="test-repo/"
+ARG HOMEDIR=/build
+
+ARG BUILDER_UID=10000
+ARG BUILDER_GID=100
+
+#checkov:skip=CKV_DOCKER_4:it's a remote git repo
+ADD --chown=${BUILDER_UID}:${BUILDER_GID} --keep-git-dir=false ${TEST_APP_REPO}#v${TEST_APP_VERSION} ${HOMEDIR}/test-app
+
+WORKDIR ${HOMEDIR}/test-app
+ARG LD_FLAGS="-s -w -extldflags '-static'-X main.version=1.0.0"
+
+ENV GOCACHE=${HOMEDIR}/.cache/go-build
+
+RUN --mount=type=cache,id=go-vendor-${TARGETARCH},target=${HOMEDIR}/test-app/cached-vendor,uid=${BUILDER_UID},gid=${BUILDER_GID},sharing=locked \
+    set -eux ; \
+    [ -z "$(ls -A cached-vendor)" ] && go mod tidy && go mod vendor && cp -r vendor/* cached-vendor/ ; \
+    [ -n "$(ls -A cached-vendor)" ] && mkdir -p vendor && cp -r cached-vendor/* vendor/ && go mod tidy && go mod vendor && cp -r vendor/* cached-vendor/ ; \
+    GOARCH=${TARGETARCH} CGO_ENABLED=0 go build -mod=vendor -ldflags="${LD_FLAGS}" -v ./cmd/test-app ; \
+    upx --best --lzma --exact test-app ; \
+    go clean -cache -modcache ; \
+    rm -rf vendor ; \
+    rm -rf ${HOMEDIR}/.cache ; \
+    rm -rf ${GOPATH}/pkg ${GOPATH}/src
+
+FROM ${REPO}${ORG}/distroless:${DEBIAN_VERSION} AS distroless
+
+ARG HOMEDIR=/build
+
+COPY --chown=0:0 --from=build ${HOMEDIR}/test-app/test-app /usr/bin/test-app
+
+USER nonroot
+
+ENTRYPOINT ["/usr/bin/test-app"]

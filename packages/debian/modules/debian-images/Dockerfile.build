@@ -1,0 +1,117 @@
+# syntax=docker/dockerfile:1
+# escape=\
+
+ARG BUILDKIT_SBOM_SCAN_CONTEXT=true
+ARG BUILDKIT_SBOM_SCAN_STAGE=true
+ARG DEBIAN_VERSION="trixie-20251117-slim"
+ARG REPO="docker.io/"
+ARG ORG="sumicare"
+
+FROM ${REPO}${ORG}/base:${DEBIAN_VERSION} AS base
+
+ARG TARGETARCH
+
+ARG PYTHON_ADDITIONAL_BUILD_DEPS="libssl-dev zlib1g-dev libbz2-dev libreadline-dev libsqlite3-dev libncursesw5-dev xz-utils tk-dev libxml2-dev libxmlsec1-dev libffi-dev liblzma-dev libzstd-dev"
+
+RUN --mount=type=cache,id=cache-apt-${TARGETARCH},target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,id=lib-apt-${TARGETARCH},target=/var/lib/apt,sharing=locked \
+    set -eux ; \
+    apt-get update -y ; \
+    apt-get upgrade -y ; \
+    apt-get install -y --no-install-recommends --no-install-suggests build-essential zsh git tar unzip python3 python3-pip upx-ucl ${PYTHON_ADDITIONAL_BUILD_DEPS} ; \
+    apt-get install -y $(apt-cache depends --no-recommends --no-suggests nodejs \
+    | awk '$1=="Depends:" {print $2} $2=="Depends:" {print $3}' \
+    | grep -v '^<' \
+    | sort -u) ; \
+    apt-get install -y $(apt-cache depends --no-recommends --no-suggests rustc \
+    | awk '$1=="Depends:" {print $2} $2=="Depends:" {print $3}' \
+    | grep -v '^<' \
+    | sort -u) ; \
+    apt-get purge -y --auto-remove ; \
+    find /usr -name '*.pyc' -type f -exec bash -c 'for pyc; do dpkg -S "$pyc" &> /dev/null || rm -vf "$pyc"; done' -- '{}' + ; \
+    rm -rf /var/lib/apt/lists/*
+
+ARG UID=10000
+ARG GID=100 
+ARG USER="developer"
+
+ARG HOMEDIR=/build
+WORKDIR ${HOMEDIR}
+
+COPY --chown=${UID}:${GID} --chmod=0755 ./scripts/which.sh ${HOMEDIR}/.asdf/which.sh
+
+RUN set -eux ; \
+    useradd --shell /bin/zsh -l -m -d ${HOMEDIR} -u ${UID} -g ${GID} ${USER} ; \
+    chmod +x ${HOMEDIR}/.asdf/which.sh ; \
+    chown -R ${UID}:${GID} ${HOMEDIR} 
+
+USER ${USER}
+
+ARG GOLANG_VERSION="1.25.4"
+ARG ASDF_VERSION="0.18.0"
+
+RUN set -eux ; \
+    mkdir -p "${HOMEDIR}/go" ; \
+    curl -sSLo go${GOLANG_VERSION}.linux-${TARGETARCH}.tar.gz https://go.dev/dl/go${GOLANG_VERSION}.linux-${TARGETARCH}.tar.gz ; \
+    tar xzf go${GOLANG_VERSION}.linux-${TARGETARCH}.tar.gz ; \
+    rm go${GOLANG_VERSION}.linux-${TARGETARCH}.tar.gz ; \
+    mv go go${GOLANG_VERSION}
+
+ENV GOPATH="${HOMEDIR}/go" \
+    GOROOT="${HOMEDIR}/go${GOLANG_VERSION}"
+
+ENV PATH="$GOPATH/bin:$GOROOT/bin:${HOMEDIR}/.asdf/shims:${HOMEDIR}/.local/bin:$PATH"
+
+RUN set -eux ; \
+    go install -v github.com/asdf-vm/asdf/cmd/asdf@v${ASDF_VERSION} ; \
+    echo "fpath=(\$HOME/.asdf/completions \$fpath)" >> ${HOMEDIR}/.zshrc ; \
+    echo "autoload -Uz compinit && compinit" >> ${HOMEDIR}/.zshrc ; \
+    echo "autoload -Uz promptinit && promptinit" >> ${HOMEDIR}/.zshrc ; \
+    echo "prompt walters" >> ${HOMEDIR}/.zshrc ; \
+    mkdir -p "${HOMEDIR}/.asdf/completions" ; \
+    asdf completion zsh > "${HOMEDIR}/.asdf/completions/_asdf" ; \
+    echo ". <(asdf completion bash)" >> ${HOMEDIR}/.bashrc ; \
+    echo "export ASDF_DATA_DIR=\"${HOMEDIR}/.asdf\"" >> ${HOMEDIR}/.bash_profile ; \
+    echo "export ASDF_DATA_DIR=\"${HOMEDIR}/.asdf\"" >> ${HOMEDIR}/.zshrc ; \
+    echo "export PATH=\"\$GOPATH/bin:\$GOROOT/bin:${HOMEDIR}/.asdf/shims:${HOMEDIR}/.local/bin:$PATH\"" >> ${HOMEDIR}/.bash_profile ; \
+    echo "export PATH=\"\$GOPATH/bin:\$GOROOT/bin:${HOMEDIR}/.asdf/shims:${HOMEDIR}/.local/bin:$PATH\"" >> ${HOMEDIR}/.zshrc ; \
+    chmod -R u+w $GOPATH/pkg ; \
+    go clean -cache -modcache ; \
+    rm -rf ${GOPATH}/pkg
+
+COPY --chown=${UID}:${GID} --chmod=0644 .tool-versions ${HOMEDIR}/.tool-versions
+COPY --chown=${UID}:${GID} --chmod=0755 asdf ${HOMEDIR}/.asdf/plugins
+
+## Put your version locked asdf plugins in the asdf dir, and remove the .gitkeep file
+RUN --mount=type=cache,id=asdf-installs-${TARGETARCH},target=${HOMEDIR}/.asdf/installs,uid=${UID},gid=${GID},sharing=locked \
+    set -eux ; \ 
+    [ ! -f "${HOMEDIR}/.asdf/plugins/.gitkeep" ] && asdf plugin add python ${HOMEDIR}/.asdf/plugins/python && asdf plugin add golang ${HOMEDIR}/.asdf/plugins/golang ; \
+    [ -f "${HOMEDIR}/.asdf/plugins/.gitkeep" ] && asdf plugin add python && asdf plugin add golang ; \
+    bash -c "asdf install python" ; \
+    bash -c "asdf install golang" ; \
+    [ ! -f "${HOMEDIR}/.asdf/plugins/.gitkeep" ] && cat ${HOMEDIR}/.tool-versions | grep -v '^#' | cut -d " " -f 1 | xargs -r -I {} asdf plugin add {} ${HOMEDIR}/.asdf/plugins/{} ; \
+    [ -f "${HOMEDIR}/.asdf/plugins/.gitkeep" ] && cat ${HOMEDIR}/.tool-versions | grep -v '^#' | cut -d " " -f 1 | xargs -r -I {} asdf plugin add {} ; \
+    bash -c "asdf install" ; \
+    bash -c "asdf reshim" ; \
+    cp -r ${HOMEDIR}/.asdf/installs ${HOMEDIR}/.asdf/installs-${TARGETARCH}
+
+ARG PROTOC_GEN_GO_VERSION="1.36.10"
+ARG PROTOC_GEN_GRPC_VERSION="1.5.1"
+
+RUN set -eux ; \ 
+    mv ${HOMEDIR}/.asdf/installs-${TARGETARCH} ${HOMEDIR}/.asdf/installs ; \
+    npm install -g corepack ; \
+    npm install --force -g yarn ; \
+    corepack enable ; \
+    corepack install -g yarn ; \
+    asdf reshim ; \
+    go install google.golang.org/protobuf/cmd/protoc-gen-go@v${PROTOC_GEN_GO_VERSION} ; \
+    go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@v${PROTOC_GEN_GRPC_VERSION} ; \
+    chmod -R u+w $GOPATH/pkg ; \
+    go clean -cache -modcache ; \
+    rm -rf ${GOPATH}/pkg ; \
+    ${HOMEDIR}/.asdf/which.sh
+
+ENV USER=${USER}
+
+SHELL ["/usr/bin/zsh", "-eo", "pipefail", "-c"]

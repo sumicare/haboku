@@ -1,0 +1,23 @@
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+nodes:
+  - role: control-plane
+    image: kindest/node:v1.34.0
+  - role: worker
+    image: kindest/node:v1.34.0
+  - role: worker
+    image: kindest/node:v1.34.0
+  - role: worker
+    image: kindest/node:v1.34.0
+networking:
+  ipFamily: dual
+  kubeProxyMode: "nftables"
+  podSubnet: "10.244.0.0/16"
+  serviceSubnet: "10.96.0.0/12"
+  disableDefaultCNI: false
+# containerdConfigPatches:
+#   - |-
+#     [plugins."io.containerd.grpc.v1.cri".registry]
+#       [plugins."io.containerd.grpc.v1.cri".registry.mirrors]
+#         [plugins."io.containerd.grpc.v1.cri".registry.mirrors."registry.k8s.io"]
+#           endpoint = ["https://registry.k8s.io"]

@@ -1,0 +1,45 @@
+{
+  "authors": [
+    "Yuriy Yarosh <yuriy@yarosh.dev>"
+  ],
+  "debianVersion": "trixie-20251117-slim",
+  "description": "Sumicare Debian Images",
+  "devDependencies": {
+    "@sumicare/versioning": "workspace:*",
+    "npm-run-all": "^4.1.5"
+  },
+  "engines": {
+    "node": ">=25"
+  },
+  "name": "@sumicare/debian-images",
+  "packageManager": "yarn@4.10.3",
+  "private": true,
+  "repository": {
+    "type": "git",
+    "url": ""
+  },
+  "scripts": {
+    "build": "cd modules/sumicare-images && tofu init && tofu apply -auto-approve",
+    "format": "run-p 'format:*'",
+    "format:go": "golangci-lint run --fix",
+    "format:opentofu": "tofu fmt -recursive .",
+    "generate": "versioning sync",
+    "lint": "run-s 'lint:*'",
+    "lint:go": "golangci-lint run",
+    "lint:opentofu": "run-s 'lint:opentofu:*'",
+    "lint:opentofu:checkov": "checkov --skip-path '(?i)dockerfile\\.tpl$' --quiet --compact --directory .",
+    "lint:opentofu:terrascan": "terrascan scan -t k8s,docker -v -d . || true",
+    "lint:opentofu:tflint": "run-s 'lint:opentofu:tflint:*'",
+    "lint:opentofu:tflint:debian-images": "tflint --chdir modules/debian-images",
+    "lint:opentofu:tflint:sumicare-images": "tflint --chdir modules/sumicare-images",
+    "lint:opentofu:trivy": "trivy config --severity CRITICAL,HIGH --skip-files '**/*.tpl' .",
+    "lint:opentofu:validate": "tofu validate",
+    "report:sbom": "run-p 'report:sbom:*'",
+    "test": "ginkgo run -v ./..."
+  },
+  "type": "module",
+  "version": "1.0.0",
+  "versions": {
+    "debian": "trixie-20251117-slim"
+  }
+}

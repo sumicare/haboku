@@ -1,0 +1,42 @@
+resource "kubernetes_manifest" "certificate_test-app_tls" {
+  for_each = var.deploy_custom_resources ? toset(["test-app"]) : toset([])
+
+  manifest = {
+    apiVersion = "cert-manager.io/v1"
+    kind       = "Certificate"
+    metadata = {
+      labels    = local.labels
+      name      = "${local.app_name}-tls-certificates"
+      namespace = local.namespace
+    }
+
+    spec = {
+      commonName = local.app_name
+      dnsNames = [
+        "${local.app_name}-api.${local.namespace}",
+        "${local.app_name}-api.${local.namespace}.svc",
+        "${local.app_name}-api.${local.namespace}.svc.${var.cluster_domain}",
+        "${local.app_name}-metrics.${local.namespace}",
+        "${local.app_name}-metrics.${local.namespace}.svc",
+        "${local.app_name}-metrics.${local.namespace}.svc.${var.cluster_domain}",
+      ]
+      duration = "8760h0m0s"
+      issuerRef = {
+        group = "cert-manager.io"
+        kind  = "Issuer"
+        name  = var.issuer != null ? var.issuer : "${local.app_name}-issuer"
+      }
+      privateKey = {
+        algorithm = "RSA"
+        size      = 2048
+      }
+      renewBefore    = "5840h0m0s"
+      secretName     = "${local.app_name}-tls"
+      secretTemplate = {}
+      usages = [
+        "server auth",
+        "client auth",
+      ]
+    }
+  }
+}

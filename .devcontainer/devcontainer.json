@@ -1,0 +1,40 @@
+{
+  "build": {
+    "dockerfile": "../Dockerfile.devcontainer"
+  },
+  "containerEnv": {
+    "DOCKER_BUILDKIT": "1"
+  },
+  "containerUser": "developer",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "editorconfig.editorconfig",
+        "golang.go",
+        "timonwong.shellcheck",
+        "biomejs.biome",
+        "ms-vscode.vscode-typescript-next",
+        "fill-labs.dependi",
+        "ryanluker.vscode-coverage-gutters",
+        "ms-vscode.js-debug",
+        "redhat.vscode-yaml",
+        "streetsidesoftware.code-spell-checker",
+        "pkief.material-icon-theme",
+        "hashicorp.terraform"
+      ]
+    }
+  },
+  "features": {
+    "ghcr.io/devcontainers/features/docker-in-docker:1": {}
+  },
+  "mounts": [
+    "source=${localEnv:HOME}/.aws,target=/workspaces/.aws,type=bind,readonly",
+    "source=sumicare-var-lib-docker-${devcontainerId},target=/var/lib/docker,type=volume"
+  ],
+  "name": "sumicare/kubernetes-devcontainer",
+  "postCreateCommand": "sudo chown -R $(whoami) /workspaces",
+  "remoteUser": "developer",
+  "runArgs": [
+    "--privileged"
+  ]
+}

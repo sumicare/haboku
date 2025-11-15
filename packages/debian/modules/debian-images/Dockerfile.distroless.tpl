@@ -1,0 +1,78 @@
+# syntax=docker/dockerfile:1
+# escape=\
+
+{{ DockerfileHeader }}
+
+FROM ${REPO}${ORG}/base:${DEBIAN_VERSION} AS base
+
+ARG TARGETARCH
+
+ARG DISTROLESS_PACKAGES="busybox ca-certificates libc6 libc-bin"
+
+# base-passwd libc6 libcc1-0 libgcc-s1 libssl3t64 libstdc++6 netbase openssl libgdbm6t64  libffi8  libgomp1 libnsl2 libtinfo6
+
+{{ DockerfileDistrolessUnpack }}
+
+ARG NONROOT_UID=65532
+ARG NONROOT_GID=65532
+
+COPY --chown=0:0 --chmod=0644 ./debian/nsswitch.conf /dpkg/etc/nsswitch.conf
+COPY --chown=0:0 --chmod=0644 ./debian/group /dpkg/etc/group
+COPY --chown=0:0 --chmod=0644 ./debian/passwd /dpkg/etc/passwd
+COPY --chown=0:0 --chmod=0644 ./debian/ssh_known_hosts /dpkg/etc/ssh/ssh_known_hosts
+
+RUN set -eux ; \
+    # Set proper permissions for ssh directory
+    chmod 755 /dpkg/etc/ssh ; \
+    # Update CA certificates in the build environment
+    update-ca-certificates ; \
+    cd /dpkg ; \
+    # Usrmerge: move bin/sbin/lib/lib64 into usr/ and create compat symlinks
+    for d in bin sbin lib lib64; do \
+    mkdir -p "usr/$d" ; \
+    if [ -d "$d" ] && [ ! -L "$d" ]; then cp -a "$d/." "usr/$d/" ; fi ; \
+    rm -rf "$d" ; \
+    ln -sf "usr/$d" "$d" ; \
+    done ; \
+    # Link dynamic loader under lib64 if needed
+    loader=$(find usr -name "ld-linux-*.so.*" | head -n 1) ; \
+    if [ -n "$loader" ]; then \
+    loader_base=$(basename "$loader") ; \
+    [ ! -e "usr/lib64/$loader_base" ] && ln -sf "/$loader" "usr/lib64/$loader_base" ; \
+    fi ; \
+    # Fix ldd for ash and remove other binaries (keep only ldd + busybox)
+    [ -f usr/bin/ldd ] && sed -i 's|^#!/bin/bash|#!/bin/sh|' usr/bin/ldd ; \
+    for bin in usr/bin/* usr/sbin/*; do \
+    [ -f "$bin" ] && [ "$bin" != "usr/bin/ldd" ] && [ "$bin" != "usr/bin/busybox" ] && rm -f "$bin" ; \
+    done ; \
+    # Busybox applets (don't overwrite ldd)
+    for app in $(usr/bin/busybox --list); do \
+    [ "$app" != "busybox" ] && [ ! -e "bin/$app" ] && ln -sf /usr/bin/busybox "bin/$app" ; \
+    done ; \
+    # Setup non-root home and configs
+    mkdir -p nonroot usr/local/sbin usr/local/bin ; \
+    cp -r /etc/ssl etc/ssl ; \
+    cp /etc/mime.types etc/mime.types ; \
+    cp /etc/timezone /etc/localtime /etc/hostname etc/ ; \
+    chown -R "${NONROOT_UID}:${NONROOT_GID}" nonroot ; \
+    # Cleanup unnecessary files to minimize image size
+    rm -rf usr/share/doc-base usr/share/gcc usr/share/initramfs-tools usr/share/lintian usr/share/man ; \
+    rm -rf usr/share/gdb usr/share/base-passwd usr/share/libc-bin usr/share/ca-certificates ; \
+    rm -rf usr/lib/x86_64-linux-gnu/gconv usr/lib/x86_64-linux-gnu/engines-3 ; \
+    rm -rf usr/lib/locale usr/lib/ssl/misc 
+
+FROM scratch
+
+ENV PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin" \
+    SSL_CERT_FILE="/etc/ssl/certs/ca-certificates.crt" \
+    LANG='C.UTF-8' \
+    LANGUAGE='C' \
+    LC_ALL='C.UTF-8' \
+    TZ='UTC' \
+    USER='nonroot' \ 
+    SHELL='/bin/ash'
+
+COPY --from=base /dpkg /
+USER nonroot
+
+ENTRYPOINT [ "/bin/ash", "-c" ]

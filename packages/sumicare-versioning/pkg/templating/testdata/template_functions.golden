@@ -1,0 +1,299 @@
+###           DO NOT EDIT            ###
+# This file is automagically generated #
+=== Data ===
+Org: sumicare
+Repo: ghcr.io/sumicare
+Debian: bookworm-20241111-slim
+Version: bookworm-20241111-slim
+Repo Func: 
+
+=== Terraform Providers ===
+terraform {
+  required_version = ">= 1.10"
+
+  required_providers {
+    kubernetes = {
+      source  = "registry.opentofu.org/hashicorp/kubernetes"
+      version = "~> 2"
+    }
+  }
+}
+terraform {
+  required_version = ">= 1.10"
+
+  required_providers {
+    docker = {
+      source  = "registry.opentofu.org/kreuzwerker/docker"
+      version = "~> 3"
+    }
+  }
+}
+
+=== Terraform Variables ===
+variable "org" {
+  description = "Organization Name, used for image tagging."
+  type        = string
+  default     = "sumicare"
+}
+variable "repository" {
+  description = "Image repository path, with trailing '/'."
+  type        = string
+  default     = "docker.io/"
+}
+variable "env" {
+  description = "Environment"
+  type        = string
+  default     = "dev"
+  validation {
+    condition     = contains(["dev", "staging", "prod"], var.env)
+    error_message = "Env must be one of dev, staging, or prod."
+  }
+}
+variable "replicas" {
+  description = "Number of replicas for the deployment"
+  type        = number
+  default     = 3
+}
+variable "resources" {
+  description = "Resource requests and limits for the container"
+  type = object({
+    requests = object({
+      cpu    = string
+      memory = string
+    })
+    limits = object({
+      cpu    = string
+      memory = string
+    })
+  })
+  default = {
+    requests = {
+      cpu    = "100m"
+      memory = "64Mi"
+    }
+    limits = {
+      cpu    = "250m"
+      memory = "512Mi"
+    }
+  }
+}
+variable "debian_version" {
+  description = "Debian Version to build distroless image from."
+  type        = string
+  default     = "bookworm-20241111-slim"
+}
+variable "org" {
+  description = "Organization Name, used for image tagging."
+  type        = string
+  default     = "sumicare"
+}
+
+variable "repository" {
+  description = "Image repository path, with trailing '/'."
+  type        = string
+  default     = "docker.io/"
+}
+
+variable "registry_auth" {
+  description = "Docker registry auth configuration, to push images into."
+  type = object({
+    address  = string
+    username = string
+    password = string
+  })
+  default = null
+}
+
+variable "debian_version" {
+  description = "Debian Version to build distroless image from."
+  type        = string
+  default     = "bookworm-20241111-slim"
+}
+variable "org" {
+  description = "Organization Name, used for image tagging."
+  type        = string
+  default     = "sumicare"
+}
+
+variable "repository" {
+  description = "Image repository path, with trailing '/'."
+  type        = string
+  default     = "docker.io/"
+}
+
+variable "env" {
+  description = "Environment"
+  type        = string
+  default     = "dev"
+  validation {
+    condition     = contains(["dev", "staging", "prod"], var.env)
+    error_message = "Env must be one of dev, staging, or prod."
+  }
+}
+variable "probe_initial_delay" {
+  description = "Initial delay for liveness/readiness probes"
+  type        = number
+  default     = 1
+}
+
+variable "probe_timeout" {
+  description = "Timeout for liveness/readiness probes"
+  type        = number
+  default     = 2
+}
+
+variable "probe_period" {
+  description = "Period for liveness/readiness probes"
+  type        = number
+  default     = 5
+}
+
+variable "probe_failure_threshold" {
+  description = "Failure threshold for liveness/readiness probes"
+  type        = number
+  default     = 2
+}
+variable "run_as_user" {
+  description = "User user ID to run the container as"
+  type        = number
+  default     = 65532
+}
+
+variable "run_as_group" {
+  description = "User group ID to run the container as"
+  type        = number
+  default     = 65532
+}
+
+variable "fs_group" {
+  description = "Filesystem group ID for pod volumes"
+  type        = number
+  default     = 65532
+}
+variable "registry_auth" {
+  description = "Docker registry auth configuration, to push images into."
+  type = object({
+    address  = string
+    username = string
+    password = string
+  })
+  default = null
+}
+variable "revision_history_limit" {
+  description = "Revision history limit for the deployment"
+  type        = number
+  default     = 10
+}
+variable "cluster_domain" {
+  description = "Kubernetes cluster domain"
+  type        = string
+  default     = "cluster.local"
+}
+
+=== Dockerfile ===
+ARG BUILDKIT_SBOM_SCAN_CONTEXT=true
+ARG BUILDKIT_SBOM_SCAN_STAGE=true
+ARG DEBIAN_VERSION="bookworm-20241111-slim"
+ARG REPO="docker.io/"
+ARG ORG="sumicare"
+ARG BUILDKIT_SBOM_SCAN_CONTEXT=true
+ARG BUILDKIT_SBOM_SCAN_STAGE=true
+ARG DEBIAN_VERSION="bookworm-20241111-slim"
+ARG REPO="docker.io/"
+ARG ORG="sumicare"
+FROM ${REPO}${ORG}/build:${DEBIAN_VERSION} AS build
+
+ARG TARGETARCH
+
+ARG TEST_VERSION="2.16.0"
+ARG TEST_REPO=""
+ARG BUILDKIT_SBOM_SCAN_CONTEXT=true
+ARG BUILDKIT_SBOM_SCAN_STAGE=true
+ARG DEBIAN_VERSION="bookworm-20241111-slim"
+ARG REPO="docker.io/"
+ARG ORG="sumicare"
+FROM ${REPO}${ORG}/build:${DEBIAN_VERSION} AS build
+
+ARG TARGETARCH
+
+ARG TEST_VERSION="2.16.0"
+ARG TEST_REPO=""
+ARG HOMEDIR=/build
+
+ARG BUILDER_UID=10000
+ARG BUILDER_GID=100
+
+#checkov:skip=CKV_DOCKER_4:it's a remote git repo
+ADD --chown=${BUILDER_UID}:${BUILDER_GID} --keep-git-dir=false ${TEST_REPO}#v${TEST_VERSION} ${HOMEDIR}/test
+
+WORKDIR ${HOMEDIR}//app
+ARG LD_FLAGS="-s -w -extldflags '-static'-s -w"
+
+ENV GOCACHE=${HOMEDIR}/.cache/go-build
+
+RUN --mount=type=cache,id=go-vendor-${TARGETARCH},target=${HOMEDIR}/test/cached-vendor,uid=${BUILDER_UID},gid=${BUILDER_GID},sharing=locked \
+    set -eux ; \
+    [ -z "$(ls -A cached-vendor)" ] && go mod tidy && go mod vendor && cp -r vendor/* cached-vendor/ ; \
+    [ -n "$(ls -A cached-vendor)" ] && mkdir -p vendor && cp -r cached-vendor/* vendor/ && go mod tidy && go mod vendor && cp -r vendor/* cached-vendor/ ; \
+    GOARCH=${TARGETARCH} CGO_ENABLED=0 go build -mod=vendor -ldflags="${LD_FLAGS}" -v main ; \
+    upx --best --lzma --exact test ; \
+    go clean -cache -modcache ; \
+    rm -rf vendor ; \
+    rm -rf ${HOMEDIR}/.cache ; \
+    rm -rf ${GOPATH}/pkg ${GOPATH}/src
+
+FROM ${REPO}${ORG}/distroless:${DEBIAN_VERSION} AS distroless
+
+ARG HOMEDIR=/build
+
+COPY --chown=0:0 --from=build ${HOMEDIR}//app/test /usr/bin/test
+
+USER nonroot
+
+ENTRYPOINT ["/usr/bin/test"]
+
+
+=== Workload Chunks ===
+
+security_context {
+	capabilities {
+		drop = ["ALL"]
+	}
+
+	read_only_root_filesystem = true
+}
+
+security_context {
+	run_as_non_root = true
+	run_as_user     = var.run_as_user
+	run_as_group    = var.run_as_group
+	fs_group        = var.fs_group
+}
+
+resources {
+            limits = {
+              cpu    = var.resources.limits.cpu
+              memory = var.resources.limits.memory
+            }
+
+            requests = {
+              cpu    = var.resources.requests.cpu
+              memory = var.resources.requests.memory
+            }
+          }
+match_expressions {
+	key      = "eks.amazonaws.com/compute-type"
+	operator = "NotIn"
+	values   = ["fargate", "auto"]
+}
+match_expressions {
+	key      = "lifecycle"
+	operator = "NotIn"
+	values   = ["Spot"]
+}
+	
+match_expressions {
+	key      = "cloud.google.com/gke-spot"
+	operator = "NotIn"
+	values   = ["true"]
+}

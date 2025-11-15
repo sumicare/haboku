@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+
+yarn format
+yarn lint

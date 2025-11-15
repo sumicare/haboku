@@ -1,0 +1,127 @@
+# syntax=docker/dockerfile:1
+# escape=\
+
+ARG BUILDKIT_SBOM_SCAN_CONTEXT=true
+ARG BUILDKIT_SBOM_SCAN_STAGE=true
+ARG DEBIAN_VERSION="trixie-20251117-slim"
+
+FROM debian:${DEBIAN_VERSION} AS base
+
+ARG TARGETARCH
+
+ENV LANG='en_US.UTF-8' \
+    LANGUAGE='en_US' \
+    LC_ALL='en_US.UTF-8' \
+    TZ='UTC' \
+    DEBIAN_FRONTEND=noninteractive
+
+RUN rm -f /etc/apt/apt.conf.d/docker-clean ; \
+    echo 'Binary::apt::APT::Keep-Downloaded-Packages "true";' > /etc/apt/apt.conf.d/keep-cache
+
+ARG CLI_TOOLS='procps htop mc nano'
+
+ARG PYTHON_ADDITIONAL_BUILD_DEPS="libssl-dev zlib1g-dev libbz2-dev libreadline-dev libsqlite3-dev libncursesw5-dev xz-utils tk-dev libxml2-dev libxmlsec1-dev libffi-dev liblzma-dev libzstd-dev"
+
+RUN --mount=type=cache,id=cache-apt-${TARGETARCH},target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,id=lib-apt-${TARGETARCH},target=/var/lib/apt,sharing=locked \
+    set -eux ; \
+    apt-get update -y ; \
+    apt-get upgrade -y ; \
+    apt-get install -y build-essential bash zsh git curl unzip openssl ca-certificates locales tzdata tar gpg python3 python3-pip ${CLI_TOOLS} ${PYTHON_ADDITIONAL_BUILD_DEPS} ; \
+    apt-get install -y $(apt-cache depends --no-recommends --no-suggests nodejs \
+    | awk '$1=="Depends:" {print $2} $2=="Depends:" {print $3}' \
+    | grep -v '^<' \
+    | sort -u) ; \
+    apt-get install -y $(apt-cache depends --no-recommends --no-suggests rustc \
+    | awk '$1=="Depends:" {print $2} $2=="Depends:" {print $3}' \
+    | grep -v '^<' \
+    | sort -u) ; \
+    echo $TZ > /etc/timezone ; \
+    cp "/usr/share/zoneinfo/${TZ}" /etc/localtime || true ; \
+    echo "$LANG UTF-8" >> /etc/locale.gen ; \
+    echo "sumicare" > /etc/hostname ; \
+    locale-gen $LANG; \
+    update-locale LC_CTYPE=$LANG ; \
+    update-locale LANG=$LANG ; \
+    update-locale LC_ALL=$LC_ALL ; \
+    update-locale LANGUAGE=$LANGUAGE ; \
+    dpkg-reconfigure locales ;\
+    apt-get purge -y --auto-remove ; \
+    find /usr -name '*.pyc' -type f -exec bash -c 'for pyc; do dpkg -S "$pyc" &> /dev/null || rm -vf "$pyc"; done' -- '{}' + ; \
+    rm -rf /var/lib/apt/lists/*
+
+ARG UID=10000
+ARG GID=100 
+
+ARG HOMEDIR=/workspaces
+WORKDIR ${HOMEDIR}
+
+COPY --chown=${UID}:${GID} --chmod=0755 ./packages/debian/modules/debian-images/scripts/which.sh ${HOMEDIR}/.asdf/which.sh
+
+RUN set -eux ; \
+    useradd --shell /bin/zsh -l -m -d ${HOMEDIR} -u ${UID} -g ${GID} developer ; \
+    echo "developer ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers.d/developer ; \
+    chmod 0440 /etc/sudoers.d/developer ; \
+    mkdir -p ${HOMEDIR}/run ; \
+    chmod 707 ${HOMEDIR}/run ; \
+    chown -R ${UID}:${GID} ${HOMEDIR} 
+
+USER developer
+
+ARG GOLANG_VERSION="1.25.4"
+ARG ASDF_VERSION="0.18.0"
+
+RUN set -eux ; \
+    mkdir -p "${HOMEDIR}/go" ; \
+    curl -sSLo go${GOLANG_VERSION}.linux-${TARGETARCH}.tar.gz https://go.dev/dl/go${GOLANG_VERSION}.linux-${TARGETARCH}.tar.gz  ; \
+    tar xzf go${GOLANG_VERSION}.linux-${TARGETARCH}.tar.gz ; \
+    rm go${GOLANG_VERSION}.linux-${TARGETARCH}.tar.gz ; \
+    mv go go${GOLANG_VERSION}
+
+ENV GOPATH="${HOMEDIR}/go" \
+    GOROOT="${HOMEDIR}/go${GOLANG_VERSION}"
+
+ENV PATH="$GOPATH/bin:$GOROOT/bin:${HOMEDIR}/.asdf/shims:${HOMEDIR}/.local/bin:$PATH"
+
+RUN set -eux ; \
+    go install -v github.com/asdf-vm/asdf/cmd/asdf@v${ASDF_VERSION} ; \
+    echo "fpath=(\$HOME/.asdf/completions \$fpath)" >> ${HOMEDIR}/.zshrc ; \
+    echo "autoload -Uz compinit && compinit" >> ${HOMEDIR}/.zshrc ; \
+    echo "autoload -Uz promptinit && promptinit" >> ${HOMEDIR}/.zshrc ; \
+    echo "prompt walters" >> ${HOMEDIR}/.zshrc ; \
+    mkdir -p "$HOME/.asdf/completions" ; \
+    asdf completion zsh > "$HOME/.asdf/completions/_asdf" ; \
+    echo ". <(asdf completion bash)" >> ${HOMEDIR}/.bashrc ; \
+    echo "export ASDF_DATA_DIR=\"${HOMEDIR}/.asdf\"" >> ${HOMEDIR}/.bash_profile ; \
+    echo "export ASDF_DATA_DIR=\"${HOMEDIR}/.asdf\"" >> ${HOMEDIR}/.zshrc ; \
+    echo "export PATH=\"\$GOPATH/bin:\$GOROOT/bin:${HOMEDIR}/.asdf/shims:${HOMEDIR}/.local/bin:$PATH\"" >> ${HOMEDIR}/.bash_profile ; \
+    echo "export PATH=\"\$GOPATH/bin:\$GOROOT/bin:${HOMEDIR}/.asdf/shims:${HOMEDIR}/.local/bin:$PATH\"" >> ${HOMEDIR}/.zshrc 
+
+COPY --chown=${UID}:${GID} --chmod=0644 .tool-versions ${HOMEDIR}/.tool-versions
+COPY --chown=${UID}:${GID} --chmod=0755 ./packages/debian/modules/debian-images/asdf ${HOMEDIR}/.asdf/plugins
+
+## NOTE: you won't be able to add certain asdf plugins without prior installed python and golang
+RUN --mount=type=cache,id=asdf-installs-${TARGETARCH},target=${HOMEDIR}/.asdf/installs,uid=${UID},gid=${GID},sharing=locked \
+    set -eux ; \ 
+    [ ! -f "${HOMEDIR}/.asdf/plugins/.gitkeep" ] && asdf plugin add python ${HOMEDIR}/.asdf/plugins/python && asdf plugin add golang ${HOMEDIR}/.asdf/plugins/golang ; \
+    [ -f "${HOMEDIR}/.asdf/plugins/.gitkeep" ] && asdf plugin add python && asdf plugin add golang ; \
+    bash -c "asdf install python" ; \
+    bash -c "asdf install golang" ; \
+    [ ! -f "${HOMEDIR}/.asdf/plugins/.gitkeep" ] && cat ${HOMEDIR}/.tool-versions | grep -v '^#' | cut -d " " -f 1 | xargs -r -I {} asdf plugin add {} ${HOMEDIR}/.asdf/plugins/{} ; \
+    [ -f "${HOMEDIR}/.asdf/plugins/.gitkeep" ] && cat ${HOMEDIR}/.tool-versions | grep -v '^#' | cut -d " " -f 1 | xargs -r -I {} asdf plugin add {} ; \
+    bash -c "asdf install" ; \
+    bash -c "asdf reshim" ; \
+    cp -r ${HOMEDIR}/.asdf/installs ${HOMEDIR}/.asdf/installs-${TARGETARCH}
+
+RUN set -eux ; \ 
+    mv ${HOMEDIR}/.asdf/installs-${TARGETARCH} ${HOMEDIR}/.asdf/installs ; \
+    npm install -g corepack ; \
+    npm install --force -g yarn ; \
+    corepack enable ; \
+    corepack install -g yarn ; \
+    asdf reshim ; \
+    ${HOMEDIR}/.asdf/which.sh 
+
+ENV USER="developer"
+
+SHELL ["/usr/bin/zsh", "-eo", "pipefail", "-c"]

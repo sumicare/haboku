@@ -1,0 +1,15 @@
+# treats your Xcode project file as a binary; prevents Git from trying to fix newlines, show in diffs, and excludes from merges
+*.pbxproj -crlf -diff -merge
+
+/.pnp.js            binary linguist-generated=true
+/.yarn/plugins/*    binary linguist-generated=true linguist-vendored=true
+/.yarn/releases/*   binary linguist-generated=true linguist-vendored=true
+/.yarn/cache/*      binary linguist-generated=true linguist-vendored=true
+/.yarn/unplugged/*  binary linguist-generated=true linguist-vendored=true
+tsconfig.json       linguist-language=JSON5
+jsconfig.json       linguist-language=JSON5
+*.code-workspace    linguist-language=JSON5
+
+*.zip    binary linguist-generated=true linguist-vendored=true
+
+* text=auto
