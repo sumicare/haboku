@@ -1494,12 +1494,17 @@
     "go.alternateTools": {
       "customFormatter": "golangci-lint"
     },
-    "go.formatFlags": ["fmt", "--stdin"],
+    "go.formatFlags": [
+      "fmt",
+      "--stdin"
+    ],
     "go.formatTool": "custom",
-    "go.lintFlags": ["--path-mode=abs", "--fast-only"],
+    "go.lintFlags": [
+      "--path-mode=abs",
+      "--fast-only"
+    ],
     "go.lintTool": "golangci-lint",
     "terminal.integrated.cwd": ".",
-    "vscord.status.idle.disconnectOnIdle": false,
     "workbench.iconTheme": "material-icon-theme"
   }
 }

@@ -1,4 +1,4 @@
-module github.com/sumicare/opentofu-kubernetes-modules/packages/sumicare-versioning
+module sumi.care/util/sumicare-versioning
 
 go 1.25
 

@@ -48,7 +48,6 @@ import (
 	"strings"
 	"sync"
 
-	"sumi.care/util/sumicare-versioning/pkg/asdf"
 	"sumi.care/util/sumicare-versioning/pkg/crds"
 	"sumi.care/util/sumicare-versioning/pkg/templating"
 	"sumi.care/util/sumicare-versioning/pkg/versions"
@@ -57,8 +56,6 @@ import (
 const (
 	// packagesDir is the directory containing package subdirectories.
 	packagesDir = "packages"
-	// debianToolVersionsPath is the .tool-versions file for Debian images.
-	debianToolVersionsPath = "packages/debian/modules/debian-images/.tool-versions"
 )
 
 // main is the CLI entry point.
@@ -115,7 +112,6 @@ func printVersionsJSONSummary(updated map[string]versions.VersionChange) {
 
 // updateVersions fetches latest versions and updates versions.json and package.json files.
 func updateVersions() error {
-	toolUpdates, toolErrors := updateToolVersions()
 	v, versionErrors := fetchAllVersions()
 
 	if err := versions.UpdateVersionsJSON(v); err != nil {
@@ -127,69 +123,10 @@ func updateVersions() error {
 		return fmt.Errorf("update package.json files: %w", err)
 	}
 
-	printErrors(".tool-versions errors:", toolErrors)
-	printUpdates(".tool-versions updates:", toolUpdates)
 	printErrors("versions.json errors:", versionErrors)
 	printVersionsJSONSummary(updated)
 
 	return nil
-}
-
-// updateToolVersions updates .tool-versions files and returns updates and errors.
-func updateToolVersions() ([]string, []string) {
-	updates := make([]string, 0, 2) //nolint:mnd // 2 tool-versions files
-
-	var errs []string
-
-	cfgs := []struct{ Path, Label string }{
-		{".tool-versions", ""},
-		{debianToolVersionsPath, "debian-images"},
-	}
-	for i := range cfgs {
-		cfg := &cfgs[i]
-		if err := asdf.InstallPluginsForFile(cfg.Path); err != nil {
-			errs = append(errs, fmt.Sprintf("%s: %v", cfg.Path, err))
-		}
-
-		results, err := asdf.UpdateToolsToLatestForFile(cfg.Path)
-		if err != nil {
-			errs = append(errs, fmt.Sprintf("%s: %v", cfg.Path, err))
-			continue
-		}
-
-		var changed, installed int
-		for j := range results {
-			if results[j].Changed {
-				changed++
-			}
-
-			if results[j].Installed {
-				installed++
-			}
-		}
-
-		if changed == 0 && installed == 0 {
-			continue
-		}
-
-		label := cfg.Path
-		if cfg.Label != "" {
-			label = cfg.Label
-		}
-
-		var parts []string
-		if changed > 0 {
-			parts = append(parts, fmt.Sprintf("%d updated", changed))
-		}
-
-		if installed > 0 {
-			parts = append(parts, fmt.Sprintf("%d installed", installed))
-		}
-
-		updates = append(updates, fmt.Sprintf("%s: %s", label, strings.Join(parts, ", ")))
-	}
-
-	return updates, errs
 }
 
 // fetchAllVersions fetches versions for all projects in parallel.
@@ -236,19 +173,6 @@ func printErrors(title string, errs []string) {
 
 	for _, e := range errs {
 		fmt.Printf("  ⚠ %s\n", e)
-	}
-}
-
-// printUpdates prints a list of updates if non-empty.
-func printUpdates(title string, updates []string) {
-	if len(updates) == 0 {
-		return
-	}
-
-	fmt.Println("\n" + title)
-
-	for _, u := range updates {
-		fmt.Printf("  ✓ %s\n", u)
 	}
 }
 
