@@ -795,7 +795,7 @@ resource "kubernetes_deployment" "linkerd_identity" {
 
         container {
           name  = "identity"
-          image = "cr.l5d.io/linkerd/controller:edge-25.8.5"
+          image = "cr.l5d.io/linkerd/controller:edge-25.8.5@sha256:f184bafbea2e4b535a68f9e57ae2bcb756ac156189c7e694a769ed5e364dd4f6"
           args  = ["identity", "-log-level=info", "-log-format=plain", "-controller-namespace=linkerd", "-identity-trust-domain=sumicare.local", "-identity-issuance-lifetime=24h0m0s", "-identity-clock-skew-allowance=20s", "-identity-scheme=linkerd.io/tls", "-enable-pprof=false", "-kube-apiclient-qps=100", "-kube-apiclient-burst=200"]
 
           port {
@@ -1960,7 +1960,7 @@ resource "kubernetes_deployment" "linkerd_destination" {
 
         container {
           name  = "destination"
-          image = "cr.l5d.io/linkerd/controller:edge-25.8.5"
+          image = "cr.l5d.io/linkerd/controller:edge-25.8.5@sha256:f184bafbea2e4b535a68f9e57ae2bcb756ac156189c7e694a769ed5e364dd4f6"
           args  = ["destination", "-addr=:8086", "-controller-namespace=linkerd", "-outbound-transport-mode=transport-header", "-enable-h2-upgrade=true", "-log-level=info", "-log-format=plain", "-enable-endpoint-slices=true", "-cluster-domain=cluster.local", "-identity-trust-domain=sumicare.local", "-default-opaque-ports=25,587,3306,4444,5432,6379,9300,11211", "-enable-ipv6=false", "-enable-pprof=false", "--meshed-http2-client-params={\"keep_alive\":{\"interval\":{\"seconds\":10},\"timeout\":{\"seconds\":3},\"while_idle\":true}}"]
 
           port {
@@ -2016,7 +2016,7 @@ resource "kubernetes_deployment" "linkerd_destination" {
 
         container {
           name  = "sp-validator"
-          image = "cr.l5d.io/linkerd/controller:edge-25.8.5"
+          image = "cr.l5d.io/linkerd/controller:edge-25.8.5@sha256:f184bafbea2e4b535a68f9e57ae2bcb756ac156189c7e694a769ed5e364dd4f6"
           args  = ["sp-validator", "-log-level=info", "-log-format=plain", "-enable-pprof=false"]
 
           port {
@@ -2080,7 +2080,7 @@ resource "kubernetes_deployment" "linkerd_destination" {
 
         container {
           name    = "policy"
-          image   = "cr.l5d.io/linkerd/controller:edge-25.8.5"
+          image   = "cr.l5d.io/linkerd/controller:edge-25.8.5@sha256:f184bafbea2e4b535a68f9e57ae2bcb756ac156189c7e694a769ed5e364dd4f6"
           command = ["/linkerd-policy-controller"]
           args    = ["--admin-addr=0.0.0.0:9990", "--control-plane-namespace=linkerd", "--grpc-addr=0.0.0.0:8090", "--server-addr=0.0.0.0:9443", "--server-tls-key=/var/run/linkerd/tls/tls.key", "--server-tls-certs=/var/run/linkerd/tls/tls.crt", "--cluster-networks=10.0.0.0/8,100.64.0.0/10,172.16.0.0/12,192.168.0.0/16,fd00::/8", "--identity-domain=sumicare.local", "--cluster-domain=cluster.local", "--default-policy=all-unauthenticated", "--log-level=info", "--log-format=plain", "--default-opaque-ports=25,587,3306,4444,5432,6379,9300,11211", "--global-egress-network-namespace=linkerd-egress", "--probe-networks=0.0.0.0/0,::/0"]
 
@@ -2251,7 +2251,7 @@ resource "kubernetes_cron_job_v1" "linkerd_heartbeat" {
 
             container {
               name  = "heartbeat"
-              image = "cr.l5d.io/linkerd/controller:edge-25.8.5"
+              image = "cr.l5d.io/linkerd/controller:edge-25.8.5@sha256:f184bafbea2e4b535a68f9e57ae2bcb756ac156189c7e694a769ed5e364dd4f6"
               args  = ["heartbeat", "-controller-namespace=linkerd", "-log-level=info", "-log-format=plain", "-prometheus-url=http://prometheus.linkerd-viz.svc.cluster.local:9090"]
 
               env {
@@ -2852,7 +2852,7 @@ resource "kubernetes_deployment" "linkerd_proxy_injector" {
 
         container {
           name  = "proxy-injector"
-          image = "cr.l5d.io/linkerd/controller:edge-25.8.5"
+          image = "cr.l5d.io/linkerd/controller:edge-25.8.5@sha256:f184bafbea2e4b535a68f9e57ae2bcb756ac156189c7e694a769ed5e364dd4f6"
           args  = ["proxy-injector", "-log-level=info", "-log-format=plain", "-linkerd-namespace=linkerd", "-enable-pprof=false"]
 
           port {

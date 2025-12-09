@@ -95,7 +95,7 @@ resource "kubernetes_cron_job_v1" "linkerd_heartbeat" {
 
             container {
               name  = "heartbeat"
-              image = "cr.l5d.io/linkerd/controller:edge-25.8.5"
+              image = "cr.l5d.io/linkerd/controller:edge-25.8.5@sha256:f184bafbea2e4b535a68f9e57ae2bcb756ac156189c7e694a769ed5e364dd4f6"
               args  = ["heartbeat", "-controller-namespace=linkerd", "-log-level=info", "-log-format=plain", "-prometheus-url=http://prometheus.linkerd-viz.svc.cluster.local:9090"]
 
               env {
