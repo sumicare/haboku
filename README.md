@@ -3,7 +3,7 @@
 [![Project License](https://img.shields.io/github/license/sumicare/opentofu-kubernetes-modules)](LICENSE)
 [![Go Report Card](https://goreportcard.com/badge/github.com/sumicare/opentofu-kubernetes-modules/packages/sumicare-versioning)](https://goreportcard.com/report/github.com/sumicare/opentofu-kubernetes-modules/packages/sumicare-versioning)
 
-Haboku — the splashed-ink technique of sumi-e painting — creates bold, expressive landscapes with fluid, dynamic strokes. In the spirit of this traditional art, Haboku provides a curated collection of OpenTofu modules for Reference Cloud Native Architecture (RCNA).
+Haboku — the splashed-ink technique of sumi-e painting — creates bold, expressive landscapes with fluid, dynamic strokes. In the spirit of this traditional art, Haboku provides a curated collection of OpenTofu modules for Reference Cloud Native Architecture ([RCNA](RCNA.md)).
 
 These modules offer precise, maintainable infrastructure provisioning as a robust alternative to Helm charts, ensuring reliable state management and drift detection. Designed for use with Terraform Stacks or Terragrunt.
 
