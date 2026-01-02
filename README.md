@@ -1,4 +1,4 @@
-## Sumicare Kubernetes OpenTofu Modules 🚀
+## Haboku
 
 [![Project License](https://img.shields.io/github/license/sumicare/opentofu-kubernetes-modules)](LICENSE)
 [![Go Report Card](https://goreportcard.com/badge/github.com/sumicare/opentofu-kubernetes-modules/packages/sumicare-versioning)](https://goreportcard.com/report/github.com/sumicare/opentofu-kubernetes-modules/packages/sumicare-versioning)
@@ -10,13 +10,13 @@ This is a collection of OpenTofu modules for the Reference Cloud Native Architec
 This project is designed to be used either with [Terraform Stacks](https://www.terraform.io/language/stacks) or with [Terragrunt](https://terragrunt.gruntwork.io/) and [OpenTofu](https://opentofu.io/).
 
 All docker images are built using a custom [Debian Distroless](./packages/debian/modules/debian-images/Dockerfile.distroless) base image. <br/>
-We don't have any plans for FIPS support, at the moment.
+We do have plans for FIPS support.
 
 **tldr;** 
  - Helm Charts do not provide complete off-the-shelf experience
  - Community charts often face maintenance challenges (e.g., [Bitnami maintenance status](https://github.com/bitnami/charts/issues/35164))
  - Helm drift detection can be unreliable due to Server-Side Apply and 3-way merge complexity (see [known issues](https://enix.io/en/blog/helm-4/))
- - [Infracost](https://github.com/infracost/infracost) lost traction and [DriftCtl](https://github.com/snyk/driftctl) is mostly dead, as well
+ - [Infracost](https://github.com/infracost/infracost) lost traction and [DriftCtl](https://github.com/snyk/driftctl) mostly inactive, as well
  - Lack of a single source of truth for infrastructure state leads to complex circular dependencies
  - Achieving proper Drift Detection and true Stateless Infrastructure is difficult with traditional approaches, limiting effective DevOps practices
 
@@ -26,7 +26,7 @@ This project shares our practical solutions for cloud-native infrastructure mana
 
 We are working on a comprehensive compute plane plumbing solution [tofuslicer](https://github.com/sumicare/tofuslicer), to provide "of the shelf" autoscaling experience for Kubernetes.
 
-### Usage 📦
+### Usage
 
 All terraform modules contain a `README.md` file with usage instructions, and examples.
 
@@ -42,7 +42,7 @@ All terraform modules contain a `README.md` file with usage instructions, and ex
 
 **Note:** These modules are designed for teams with at least a **[Competent level](https://link.springer.com/article/10.1007/s10270-025-01309-x#Sec2)** (Manageable level) of Organizational Maturity.
 
-### Development 🛠️
+### Development
 
 Open [.code-workspace](sumicare-kubernetes.code-workspace) file in [VSCode](https://code.visualstudio.com/), use provided [Dev Container](https://code.visualstudio.com/docs/devcontainers/containers) for local development.
 
@@ -50,11 +50,11 @@ You can install all the dependencies and tools using [asdf](https://asdf-vm.com/
 
 See [DEVELOPMENT.md](DEVELOPMENT.md) for `a more detailed explanation`...
 
-### Values 📏
+### Values
 
 See [CONVENTIONS.md](CONVENTIONS.md) and [VALUES.md](VALUES.md) for `why it is the way it is`...
 
-### License 📜
+### License
 
 Copyright 2025 Sumicare
 
