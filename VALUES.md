@@ -4,11 +4,11 @@ Inspired by the bold, unflinching strokes of haboku (破墨) in sumi-e painting 
 
 ## Core Tenets
 
-- **Uncompromising Honesty**: Direct truth prevails over courteous evasion. Clear communication, even when difficult, builds lasting trust. 🪓
-- **Humility in Craft**: No individual or solution is indispensable. We remain replaceable, adaptable, and open to better approaches. 🫥
-- **Pragmatic Construction**: We build viable, market-ready systems grounded in reality—not unattainable visions. 🛠️
-- **Evidence Over Assumption**: Every decision and feature must be validated through data and observation, never mere speculation. 🔍
-- **Relentless Improvement**: Conformity to existing standards is never sufficient. We challenge conventions and continually raise the bar. 📏
+- **Uncompromising Honesty**: Direct truth prevails over courteous evasion. Clear communication, even when difficult, builds lasting trust.
+- **Humility in Craft**: No individual or solution is indispensable. We remain replaceable, adaptable, and open to better approaches.
+- **Pragmatic Construction**: We build viable, market-ready systems grounded in reality—not unattainable visions.
+- **Evidence Over Assumption**: Every decision and feature must be validated through data and observation, never mere speculation.
+- **Relentless Improvement**: Conformity to existing standards is never sufficient. We challenge conventions and continually raise the bar.
 
 ## Compliance Aspirations
 
