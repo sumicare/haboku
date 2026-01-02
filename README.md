@@ -7,7 +7,7 @@ Haboku — the splashed-ink technique of sumi-e painting — creates bold, expre
 
 These modules offer precise, maintainable infrastructure provisioning as a robust alternative to Helm charts, ensuring reliable state management and drift detection. Designed for use with Terraform Stacks or Terragrunt.
 
-Haboku forms the expressive foundation upon which the ikebana-inspired components of the Kachō ecosystem ([Rikka](https://github.com/sumicare/rikka), [Shōka](https://github.com/sumicare/shoka), [Moribana](https://github.com/sumicare/moribana), [Jiyuka](https://github.com/sumicare/jiyuka)) harmoniously arrange cluster resources.
+Haboku forms the expressive foundation upon which the ikebana-inspired components of the [Kachō](https://github.com/sumicare/kacho) ecosystem harmoniously arrange cluster resources.
 
 ## Modules
 
