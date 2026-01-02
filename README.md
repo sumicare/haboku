@@ -25,9 +25,7 @@ Each module includes detailed usage instructions and examples.
 
 ## Development
 
-Open the provided `.code-workspace` in VS Code with the Dev Container, or install dependencies via asdf.
-
-See [DEVELOPMENT.md](DEVELOPMENT.md), [CONVENTIONS.md](CONVENTIONS.md), and [VALUES.md](VALUES.md) for details.
+Open the provided `.code-workspace` in VS Code, or other related editors, with the [DevContainer](https://containers.dev/), or install dependencies via [asdf](https://asdf-vm.com/).
 
 ## License
 
